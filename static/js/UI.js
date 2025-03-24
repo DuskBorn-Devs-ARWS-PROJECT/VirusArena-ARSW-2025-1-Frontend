@@ -1,0 +1,1 @@
+"Actualiza la interfaz del juego (indicadores, tiempo, chat de voz)."
