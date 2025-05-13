@@ -1,1 +1,0 @@
-"Lógica del mapa (render en canvas, posiciones, colisiones)."

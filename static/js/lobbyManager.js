@@ -1,1 +1,0 @@
-"Controla la creación y unión a partidas."

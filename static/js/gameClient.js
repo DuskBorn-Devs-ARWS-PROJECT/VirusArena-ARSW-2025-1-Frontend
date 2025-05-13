@@ -1,1 +1,0 @@
-"Maneja WebSockets y la comunicación con el servidor."
