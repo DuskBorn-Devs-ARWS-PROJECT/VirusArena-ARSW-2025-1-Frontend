@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virus Arena - Juego</title>
+    <link rel="stylesheet" href="css/game.css">
+</head>
+<body>
+<div class="game-container">
+    <div class="game-header">
+        <div class="player-info">
+            <h2 id="playerName"></h2>
+            <div class="player-stats">
+                <p>Tipo: <span id="playerType">Survivor</span></p>
+                <p>Power-ups: <span id="powerUpCount">0</span></p>
+                <p>Stamina: <span id="staminaCount">100</span>%</p>
+            </div>
+        </div>
+
+        <div class="game-status">
+            <h2>Estado del juego</h2>
+            <p id="gameState">En progreso</p>
+            <p>Jugadores: <span id="playerCount">0</span>/8</p>
+            <p>Tiempo: <span id="gameTimer">05:00</span></p>
+        </div>
+    </div>
+
+    <div class="game-board">
+        <div id="map" class="map-grid"></div>
+    </div>
+
+    <div class="game-controls">
+        <div class="controls-info">
+            <h3>Controles</h3>
+            <div class="controls-grid">
+                <div class="control-item">W<span>Mover arriba</span></div>
+                <div class="control-item">S<span>Mover abajo</span></div>
+                <div class="control-item">A<span>Mover izquierda</span></div>
+                <div class="control-item">D<span>Mover derecha</span></div>
+                <div class="control-item">E<span>Recoger power-up</span></div>
+                <div class="control-item">Q<span>Usar power-up</span></div>
+            </div>
+        </div>
+        <button id="quitBtn" class="btn btn-danger">Abandonar partida</button>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+<script src="js/game.js"></script>
+</body>
+</html>

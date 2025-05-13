@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virus Arena - Inicio</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/index.css">
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
+    <script src="/webjars/stomp-websocket/2.3.4/stomp.min.js"></script>
+</head>
+<body>
+<div class="container">
+    <header class="header">
+        <h1>Virus Arena</h1>
+        <p>Un juego de supervivencia e infección</p>
+    </header>
+    <main class="main-content">
+        <div class="login-form">
+            <h2>Iniciar sesión</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="username">Nombre de usuario</label>
+                    <input type="text" id="username" required>
+                </div>
+                <button type="submit" class="btn">Entrar</button>
+            </form>
+        </div>
+        <div class="game-options">
+            <button id="createGameBtn" class="btn">Crear partida</button>
+            <button id="joinGameBtn" class="btn">Unirse a partida</button>
+        </div>
+        <div class="voice-chat">
+            <h2>Chat de Voz</h2>
+            <button id="startButton" class="btn">Iniciar Chat de Voz</button>
+        </div>
+    </main>
+    <footer class="footer">
+        <p>ARSW 2025 - Universidad ECI</p>
+    </footer>
+</div>
+<script src="js/socket.js"></script>
+<script src="js/index.js"></script>
+<script>
+    const startButton = document.getElementById('startButton');
+    const ws = new WebSocket('ws://localhost:8080/ws');
+    const peerConnections = {};
+    const config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+
+    ws.onmessage = (message) => {
+        const data = JSON.parse(message.data);
+        switch (data.type) {
+            case 'offer':
+                handleOffer(data.offer, data.sender);
+                break;
+            case 'answer':
+                handleAnswer(data.answer, data.sender);
+                break;
+            case 'candidate':
+                handleCandidate(data.candidate, data.sender);
+                break;
+            default:
+                break;
+        }
+    };
+
+    startButton.onclick = async () => {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream.getTracks().forEach(track => {
+            for (const pc of Object.values(peerConnections)) {
+                pc.addTrack(track, stream);
+            }
+        });
+
+        ws.onopen = () => {
+            ws.send(JSON.stringify({ type: 'join' }));
+        };
+    };
+
+    function handleOffer(offer, sender) {
+        const pc = new RTCPeerConnection(config);
+        peerConnections[sender] = pc;
+        pc.setRemoteDescription(new RTCSessionDescription(offer));
+        pc.createAnswer().then(answer => {
+            pc.setLocalDescription(answer);
+            ws.send(JSON.stringify({ type: 'answer', answer: answer, sender: sender }));
+        });
+        pc.ontrack = (event) => {
+            const audio = document.createElement('audio');
+            audio.srcObject = event.streams[0];
+            audio.play();
+        };
+        pc.onicecandidate = (event) => {
+            if (event.candidate) {
+                ws.send(JSON.stringify({ type: 'candidate', candidate: event.candidate, sender: sender }));
+            }
+        };
+    }
+
+    function handleAnswer(answer, sender) {
+        const pc = peerConnections[sender];
+        pc.setRemoteDescription(new RTCSessionDescription(answer));
+    }
+
+    function handleCandidate(candidate, sender) {
+        const pc = peerConnections[sender];
+        pc.addIceCandidate(new RTCIceCandidate(candidate));
+    }
+</script>
+</body>
+</html>

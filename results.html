@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virus Arena - Resultados</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/results.css">
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
+    <script src="/webjars/stomp-websocket/2.3.4/stomp.min.js"></script>
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1>Resultados de la partida</h1>
+    </header>
+    <main>
+        <div id="resultMessage" class="result-message"></div>
+        <div id="playersResults" class="players-results"></div>
+        <button id="mainMenuBtn" class="btn btn-primary">Menú principal</button>
+        <button id="playAgainBtn" class="btn btn-success">Jugar de nuevo</button>
+    </main>
+    <footer>
+        <p>ARSW 2025 - Universidad ECI</p>
+    </footer>
+</div>
+<script src="js/results.js"></script>
+</body>
+</html>
