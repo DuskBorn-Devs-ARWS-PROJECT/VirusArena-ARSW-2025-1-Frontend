@@ -13,7 +13,7 @@ class GameSocket {
         if (this.connectionPromise) return this.connectionPromise;
 
         this.connectionPromise = new Promise((resolve, reject) => {
-            const socket = new SockJS('/ws'); // URL corregida
+            const socket = new SockJS('http://34.235.1.129:8080/ws');
             this.stompClient = Stomp.over(socket);
             this.stompClient.debug = () => {};
 
