@@ -35,7 +35,7 @@ function setupInitialUI() {
 }
 
 function setupWebSocket() {
-    const socket = new SockJS('http://34.235.1.129:8080/ws');
+    const socket = new SockJS('http://3.129.95.241:8080/ws');
     stompClient = Stomp.over(socket);
     stompClient.debug = () => {};
 

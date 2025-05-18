@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log("ID del jugador generado:", playerId);
 
         // WebSocket con SockJS y STOMP
-        const socket = new SockJS('http://34.235.1.129:8080/ws');
+        const socket = new SockJS('http://3.129.95.241:8080/ws');
         const stompClient = Stomp.over(socket);
 
         stompClient.debug = (str) => {
