@@ -23,16 +23,38 @@
                     <label for="username">Nombre de usuario</label>
                     <input type="text" id="username" required>
                 </div>
-                <button type="submit" class="btn">Entrar</button>
+                <div class="form-group">
+                    <label for="password">Contraseña</label>
+                    <input type="password" id="password" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Entrar</button>
             </form>
+            <p>¿No tienes cuenta? <a href="#" id="showRegister">Regístrate</a></p>
         </div>
-        <div class="game-options">
-            <button id="createGameBtn" class="btn">Crear partida</button>
-            <button id="joinGameBtn" class="btn">Unirse a partida</button>
+
+        <div class="register-form" style="display: none;">
+            <h2>Registro</h2>
+            <form id="registerForm">
+                <div class="form-group">
+                    <label for="regUsername">Nombre de usuario</label>
+                    <input type="text" id="regUsername" required>
+                </div>
+                <div class="form-group">
+                    <label for="regEmail">Email</label>
+                    <input type="email" id="regEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="regPassword">Contraseña</label>
+                    <input type="password" id="regPassword" required>
+                </div>
+                <button type="submit" class="btn btn-success">Registrarse</button>
+            </form>
+            <p>¿Ya tienes cuenta? <a href="#" id="showLogin">Inicia sesión</a></p>
         </div>
-        <div class="voice-chat">
-            <h2>Chat de Voz</h2>
-            <button id="startButton" class="btn">Iniciar Chat de Voz</button>
+
+        <div class="game-options" style="display: none;">
+            <button id="createGameBtn" class="btn btn-primary">Crear partida</button>
+            <button id="joinGameBtn" class="btn btn-secondary">Unirse a partida</button>
         </div>
     </main>
     <footer class="footer">
@@ -41,71 +63,5 @@
 </div>
 <script src="js/socket.js"></script>
 <script src="js/index.js"></script>
-<script>
-    const startButton = document.getElementById('startButton');
-    const ws = new WebSocket('ws://localhost:8080/ws');
-    const peerConnections = {};
-    const config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
-
-    ws.onmessage = (message) => {
-        const data = JSON.parse(message.data);
-        switch (data.type) {
-            case 'offer':
-                handleOffer(data.offer, data.sender);
-                break;
-            case 'answer':
-                handleAnswer(data.answer, data.sender);
-                break;
-            case 'candidate':
-                handleCandidate(data.candidate, data.sender);
-                break;
-            default:
-                break;
-        }
-    };
-
-    startButton.onclick = async () => {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        stream.getTracks().forEach(track => {
-            for (const pc of Object.values(peerConnections)) {
-                pc.addTrack(track, stream);
-            }
-        });
-
-        ws.onopen = () => {
-            ws.send(JSON.stringify({ type: 'join' }));
-        };
-    };
-
-    function handleOffer(offer, sender) {
-        const pc = new RTCPeerConnection(config);
-        peerConnections[sender] = pc;
-        pc.setRemoteDescription(new RTCSessionDescription(offer));
-        pc.createAnswer().then(answer => {
-            pc.setLocalDescription(answer);
-            ws.send(JSON.stringify({ type: 'answer', answer: answer, sender: sender }));
-        });
-        pc.ontrack = (event) => {
-            const audio = document.createElement('audio');
-            audio.srcObject = event.streams[0];
-            audio.play();
-        };
-        pc.onicecandidate = (event) => {
-            if (event.candidate) {
-                ws.send(JSON.stringify({ type: 'candidate', candidate: event.candidate, sender: sender }));
-            }
-        };
-    }
-
-    function handleAnswer(answer, sender) {
-        const pc = peerConnections[sender];
-        pc.setRemoteDescription(new RTCSessionDescription(answer));
-    }
-
-    function handleCandidate(candidate, sender) {
-        const pc = peerConnections[sender];
-        pc.addIceCandidate(new RTCIceCandidate(candidate));
-    }
-</script>
 </body>
 </html>

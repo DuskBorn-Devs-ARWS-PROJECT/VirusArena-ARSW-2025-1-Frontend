@@ -6,6 +6,12 @@ let staminaTimer;
 
 document.addEventListener('DOMContentLoaded', () => {
     try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = 'index.html';
+            return;
+        }
+
         gameState = JSON.parse(localStorage.getItem('gameState'));
         playerId = localStorage.getItem('playerId') || 'unknown';
 
@@ -15,7 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         setupInitialUI();
-        setupWebSocket();
+        setupWebSocket(token);
         setupEventListeners();
     } catch (error) {
         console.error("Error al iniciar el juego:", error);
@@ -34,38 +40,42 @@ function setupInitialUI() {
     renderGame(gameState);
 }
 
-function setupWebSocket() {
+function setupWebSocket(token) {
     const socket = new SockJS('http://3.129.95.241:8080/ws');
     stompClient = Stomp.over(socket);
     stompClient.debug = () => {};
 
-    stompClient.connect({}, function() {
-        console.log("Conectado al juego");
+    stompClient.connect(
+        { 'Authorization': `Bearer ${token}` },
+        function() {
+            console.log("Conectado al juego");
 
-        stompClient.subscribe(`/topic/game/${gameState.gameCode}/update`, function(message) {
-            const update = JSON.parse(message.body);
-            gameState = update;
+            stompClient.subscribe(`/topic/game/${gameState.gameCode}/update`, function(message) {
+                const update = JSON.parse(message.body);
+                gameState = update;
 
-            renderGame(update);
-            startGameTimer();
+                renderGame(update);
+                startGameTimer();
 
-            const currentPlayer = update.players.find(p => p.id === playerId);
-            if (currentPlayer) {
-                updatePlayerInfo(currentPlayer);
-                if (currentPlayer.type === 'SURVIVOR' && currentPlayer.staminaActive) {
-                    startStaminaTimer(currentPlayer.staminaEndTime);
+                const currentPlayer = update.players.find(p => p.id === playerId);
+                if (currentPlayer) {
+                    updatePlayerInfo(currentPlayer);
+                    if (currentPlayer.type === 'SURVIVOR' && currentPlayer.staminaActive) {
+                        startStaminaTimer(currentPlayer.staminaEndTime);
+                    }
                 }
-            }
 
-            if (update.state === 'finished') {
-                clearInterval(gameTimeInterval);
-                window.location.href = '/results';
-            }
-        });
-    }, function(error) {
-        console.error("Error de conexión:", error);
-        setTimeout(setupWebSocket, 5000);
-    });
+                if (update.state === 'finished') {
+                    clearInterval(gameTimeInterval);
+                    window.location.href = '/results';
+                }
+            });
+        },
+        function(error) {
+            console.error("Error de conexión:", error);
+            setTimeout(() => setupWebSocket(token), 5000);
+        }
+    );
 }
 
 function renderGame(state) {
@@ -167,18 +177,30 @@ function setupEventListeners() {
             case 'd': case 'arrowright': action = 'MOVE_RIGHT'; break;
             case 'e':
                 if (currentPlayer.type === 'SURVIVOR' && gameState.board[currentPlayer.y][currentPlayer.x] === 'P') {
-                    stompClient.send(`/app/game/${gameState.gameCode}/collect`, {}, JSON.stringify({ playerId, x: currentPlayer.x, y: currentPlayer.y }));
+                    stompClient.send(
+                        `/app/game/${gameState.gameCode}/collect`,
+                        { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+                        JSON.stringify({ playerId, x: currentPlayer.x, y: currentPlayer.y })
+                    );
                 }
                 e.preventDefault(); return;
             case 'q':
                 if (currentPlayer.type === 'SURVIVOR' && currentPlayer.powerUpCount > 0) {
-                    stompClient.send(`/app/game/${gameState.gameCode}/action`, {}, JSON.stringify({ playerId, action: 'USE_POWERUP' }));
+                    stompClient.send(
+                        `/app/game/${gameState.gameCode}/action`,
+                        { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+                        JSON.stringify({ playerId, action: 'USE_POWERUP' })
+                    );
                 }
                 e.preventDefault(); return;
         }
 
         if (action) {
-            stompClient.send(`/app/game/${gameState.gameCode}/action`, {}, JSON.stringify({ playerId, action }));
+            stompClient.send(
+                `/app/game/${gameState.gameCode}/action`,
+                { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+                JSON.stringify({ playerId, action })
+            );
             e.preventDefault();
         }
     });
@@ -186,7 +208,11 @@ function setupEventListeners() {
     document.getElementById('quitBtn').addEventListener('click', () => {
         if (confirm('¿Estás seguro de abandonar la partida?')) {
             if (stompClient && stompClient.connected) {
-                stompClient.send(`/app/game/${gameState.gameCode}/quit`, {}, JSON.stringify({ playerId }));
+                stompClient.send(
+                    `/app/game/${gameState.gameCode}/quit`,
+                    { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+                    JSON.stringify({ playerId })
+                );
             }
             redirectToLobby();
         }

@@ -1,4 +1,11 @@
+// results.js
 document.addEventListener('DOMContentLoaded', () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+        window.location.href = 'index.html';
+        return;
+    }
+
     const results = JSON.parse(localStorage.getItem('gameResults'));
     const resultMessage = document.getElementById('resultMessage');
     const playersResults = document.getElementById('playersResults');
