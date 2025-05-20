@@ -97,13 +97,17 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (!hostPlayerId && players.length > 0) {
                             hostPlayerId = players[0].id;
                             localStorage.setItem('hostPlayerId', hostPlayerId);
+
+                            // Si este jugador es el host, actualizar su rol en el backend
+                            if (hostPlayerId === playerId) {
+                                updateUserRole('ROLE_HOST');
+                            }
                         }
 
                         isHost = hostPlayerId === playerId;
                         updateUI();
                     } catch (error) {
                         console.error("Error al procesar actualización:", error);
-                        updateStatus("Error al actualizar lobby", "error");
                     }
                 });
 
@@ -209,5 +213,25 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error("ERROR CRÍTICO:", error);
         alert('Error al cargar el lobby. La página se recargará.');
         setTimeout(() => location.reload(), 2000);
+    }
+
+    // Añadir esta nueva función
+    async function updateUserRole(newRole) {
+        try {
+            const response = await fetch('http://3.129.95.241:8080/api/auth/update-role', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify({ role: newRole })
+            });
+
+            if (!response.ok) {
+                throw new Error('Error al actualizar rol');
+            }
+        } catch (error) {
+            console.error("Error al actualizar rol:", error);
+        }
     }
 });
