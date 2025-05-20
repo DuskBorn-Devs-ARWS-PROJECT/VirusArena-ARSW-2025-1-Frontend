@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const password = document.getElementById('password').value.trim();
 
         try {
-            const response = await fetch('http://3.129.95.241:8080/api/auth/login', {
+            const response = await fetch('http://backend-app-lb-954081308.us-east-2.elb.amazonaws.com/api/auth/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const password = document.getElementById('regPassword').value.trim();
 
         try {
-            const response = await fetch('http://3.129.95.241:8080/api/auth/register', {
+            const response = await fetch('http://backend-app-lb-954081308.us-east-2.elb.amazonaws.com/api/auth/register', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

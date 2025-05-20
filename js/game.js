@@ -41,7 +41,7 @@ function setupInitialUI() {
 }
 
 function setupWebSocket(token) {
-    const socket = new SockJS('http://3.129.95.241:8080/ws');
+    const socket = new SockJS('http://backend-app-lb-954081308.us-east-2.elb.amazonaws.com/ws');
     stompClient = Stomp.over(socket);
     stompClient.debug = () => {};
 

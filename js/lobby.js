@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const playerId = 'player-' + generateId();
         localStorage.setItem('playerId', playerId);
 
-        const socket = new SockJS('http://3.129.95.241:8080/ws');
+        const socket = new SockJS('http://backend-app-lb-954081308.us-east-2.elb.amazonaws.com/ws');
         const stompClient = Stomp.over(socket);
 
         stompClient.debug = (str) => {
@@ -218,7 +218,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Añadir esta nueva función
     async function updateUserRole(newRole) {
         try {
-            const response = await fetch('http://3.129.95.241:8080/api/auth/update-role', {
+            const response = await fetch('http://backend-app-lb-954081308.us-east-2.elb.amazonaws.com/api/auth/update-role', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
