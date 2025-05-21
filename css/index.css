@@ -102,7 +102,6 @@
     overflow: hidden;
 }
 
-/* 🔄 EFECTO DE BRILLO AL PASAR EL MOUSE */
 .login-form button::before,
 .register-form button::before,
 .login-form input[type="submit"]::before,
