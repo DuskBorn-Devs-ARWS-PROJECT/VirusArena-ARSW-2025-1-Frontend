@@ -11,14 +11,11 @@ class GameUI {
     }
 
     initEventListeners() {
-        // Pantalla de inicio
         document.getElementById('join-btn').addEventListener('click', () => this.handleJoin());
         document.getElementById('create-btn').addEventListener('click', () => this.handleCreate());
 
-        // Pantalla de espera
         document.getElementById('ready-btn').addEventListener('click', () => this.handleReady());
 
-        // Pantalla de juego
         document.querySelectorAll('.move-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 const action = btn.getAttribute('data-action');
@@ -30,12 +27,10 @@ class GameUI {
             gameSocket.sendAction('USE_POWERUP');
         });
 
-        // Pantalla de fin
         document.getElementById('play-again-btn').addEventListener('click', () => {
             this.showScreen('start');
         });
 
-        // Teclado
         document.addEventListener('keydown', (e) => {
             if (!this.screens.game.classList.contains('active')) return;
 
@@ -86,7 +81,6 @@ class GameUI {
     }
 
     handleReady() {
-        // Aquí puedes implementar lógica adicional para indicar que estás listo
         this.showScreen('game');
     }
 
@@ -100,7 +94,6 @@ class GameUI {
     }
 
     handleGameUpdate(gameUpdate) {
-        // Actualizar interfaz con los nuevos datos del juego
         gameEngine.updateGameState(gameUpdate.state);
         gameEngine.updatePlayers(gameUpdate.players || []);
         gameEngine.updateMap(gameUpdate.map);
@@ -114,7 +107,6 @@ class GameUI {
 
     showEndScreen(gameData) {
         this.showScreen('end');
-        // Aquí puedes mostrar los resultados del juego
         document.getElementById('end-title').textContent =
             gameData.winner === 'SURVIVORS' ? '¡Supervivientes ganan!' : '¡Infectados ganan!';
     }
