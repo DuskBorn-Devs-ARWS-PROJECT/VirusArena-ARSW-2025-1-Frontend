@@ -7,7 +7,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const showRegister = document.getElementById('showRegister');
     const showLogin = document.getElementById('showLogin');
 
-    // Toggle between login and register forms
     showRegister.addEventListener('click', (e) => {
         e.preventDefault();
         document.querySelector('.login-form').style.display = 'none';
@@ -20,7 +19,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelector('.login-form').style.display = 'block';
     });
 
-    // Handle login
     loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const username = document.getElementById('username').value.trim();
@@ -50,7 +48,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Handle registration
     registerForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const username = document.getElementById('regUsername').value.trim();
