@@ -1,4 +1,3 @@
-// lobby.js
 document.addEventListener('DOMContentLoaded', () => {
     try {
         const playerName = localStorage.getItem('playerName');
@@ -98,7 +97,6 @@ document.addEventListener('DOMContentLoaded', () => {
                             hostPlayerId = players[0].id;
                             localStorage.setItem('hostPlayerId', hostPlayerId);
 
-                            // Si este jugador es el host, actualizar su rol en el backend
                             if (hostPlayerId === playerId) {
                                 updateUserRole('ROLE_HOST');
                             }
@@ -215,7 +213,6 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => location.reload(), 2000);
     }
 
-    // Añadir esta nueva función
     async function updateUserRole(newRole) {
         try {
             const response = await fetch('http://backend-app-lb-954081308.us-east-2.elb.amazonaws.com/api/auth/update-role', {
