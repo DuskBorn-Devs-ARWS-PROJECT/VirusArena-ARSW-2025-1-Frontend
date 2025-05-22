@@ -200,41 +200,49 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         function generateId() {
-            // Usa crypto si está disponible, fallback a Math.random()
+            // Use Web Crypto API when available
             const crypto = window.crypto || window.msCrypto;
 
             if (crypto?.getRandomValues) {
-                const array = new Uint32Array(1);
-                crypto.getRandomValues(array);
-                return array[0].toString(36).slice(0, 9);
+                // Generate 8 bytes (64 bits) of random data
+                const buffer = new Uint8Array(8);
+                crypto.getRandomValues(buffer);
+
+                // Convert to base36 string (0-9a-z)
+                return Array.from(buffer)
+                    .map(b => b.toString(36).padStart(2, '0'))
+                    .join('')
+                    .slice(0, 9);
             }
 
-            // Fallback menos seguro
+            // Fallback (less secure) for older browsers
+            console.warn('Using less secure Math.random() fallback for ID generation');
             return Math.random().toString(36).slice(2, 11);
         }
 
         function generateGameCode() {
-            // Verificar si crypto está disponible (navegadores modernos y Node.js)
-            const crypto = window.crypto || window.msCrypto || (typeof require !== 'undefined' && require('crypto'));
+            // Use Web Crypto API when available
+            const crypto = window.crypto || window.msCrypto;
 
             if (crypto?.getRandomValues) {
-                // Versión segura con crypto API
-                const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+                const charset = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // 32 chars, no ambiguous
                 const randomValues = new Uint32Array(4);
                 crypto.getRandomValues(randomValues);
 
-                let result = '';
+                let code = '';
                 for (let i = 0; i < 4; i++) {
-                    result += charset[randomValues[i] % charset.length];
+                    code += charset[randomValues[i] % charset.length];
                 }
-                return result;
-            } else {
-                // Fallback para entornos sin crypto (menos seguro)
-                return Math.random().toString(36)
-                    .slice(2, 6)
-                    .toUpperCase()
-                    .replace(/[^A-Z0-9]/g, '0'); // Reemplaza caracteres no alfanuméricos
+                return code;
             }
+
+            // Fallback (less secure)
+            console.warn('Using less secure Math.random() fallback for game code');
+            return Math.random().toString(36)
+                .slice(2, 6)
+                .toUpperCase()
+                .replace(/[^A-Z0-9]/g, '0')
+                .replace(/[IO]/g, 'X'); // Remove ambiguous characters
         }
 
         function getStatusColors(type) {
