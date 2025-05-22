@@ -200,11 +200,41 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         function generateId() {
+            // Usa crypto si está disponible, fallback a Math.random()
+            const crypto = window.crypto || window.msCrypto;
+
+            if (crypto?.getRandomValues) {
+                const array = new Uint32Array(1);
+                crypto.getRandomValues(array);
+                return array[0].toString(36).slice(0, 9);
+            }
+
+            // Fallback menos seguro
             return Math.random().toString(36).slice(2, 11);
         }
 
         function generateGameCode() {
-            return Math.random().toString(36).slice(2, 6).toUpperCase();
+            // Verificar si crypto está disponible (navegadores modernos y Node.js)
+            const crypto = window.crypto || window.msCrypto || (typeof require !== 'undefined' && require('crypto'));
+
+            if (crypto?.getRandomValues) {
+                // Versión segura con crypto API
+                const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+                const randomValues = new Uint32Array(4);
+                crypto.getRandomValues(randomValues);
+
+                let result = '';
+                for (let i = 0; i < 4; i++) {
+                    result += charset[randomValues[i] % charset.length];
+                }
+                return result;
+            } else {
+                // Fallback para entornos sin crypto (menos seguro)
+                return Math.random().toString(36)
+                    .slice(2, 6)
+                    .toUpperCase()
+                    .replace(/[^A-Z0-9]/g, '0'); // Reemplaza caracteres no alfanuméricos
+            }
         }
 
         function getStatusColors(type) {
