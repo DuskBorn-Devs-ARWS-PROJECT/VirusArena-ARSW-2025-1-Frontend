@@ -82,29 +82,44 @@ function renderGame(state) {
     const mapElement = document.getElementById('map');
     mapElement.innerHTML = '';
 
-    for (let y = 0; y < state.board.length; y++) {
-        for (let x = 0; x < state.board[y].length; x++) {
-            const cellElement = document.createElement('div');
-            cellElement.className = 'cell';
-            cellElement.dataset.x = x;
-            cellElement.dataset.y = y;
-
-            const cellValue = state.board[y][x];
-            if (cellValue === '#') cellElement.classList.add('wall');
-            else if (cellValue === 'P') cellElement.classList.add('powerup');
-
-            const player = state.players.find(p => p.x === x && p.y === y);
-            if (player) {
-                cellElement.classList.add('player', player.type.toLowerCase());
-                if (player.id === playerId) {
-                    cellElement.style.boxShadow = '0 0 10px 3px var(--info-color)';
-                    if (player.type === 'SURVIVOR' && player.staminaActive) {
-                        cellElement.style.border = '2px solid orange';
-                    }
-                }
-            }
-
+    state.board.forEach((row, y) => {
+        row.forEach((cellValue, x) => {
+            const cellElement = createCellElement(x, y, cellValue, state);
             mapElement.appendChild(cellElement);
+        });
+    });
+}
+
+function createCellElement(x, y, cellValue, state) {
+    const cellElement = document.createElement('div');
+    cellElement.className = 'cell';
+    cellElement.dataset.x = x;
+    cellElement.dataset.y = y;
+
+    addCellClasses(cellElement, cellValue);
+    addPlayerEffects(cellElement, x, y, state);
+
+    return cellElement;
+}
+
+function addCellClasses(cellElement, cellValue) {
+    if (cellValue === '#') {
+        cellElement.classList.add('wall');
+    } else if (cellValue === 'P') {
+        cellElement.classList.add('powerup');
+    }
+}
+
+function addPlayerEffects(cellElement, x, y, state) {
+    const player = state.players.find(p => p.x === x && p.y === y);
+    if (!player) return;
+
+    cellElement.classList.add('player', player.type.toLowerCase());
+
+    if (player.id === state.playerId) {
+        cellElement.style.boxShadow = '0 0 10px 3px var(--info-color)';
+        if (player.type === 'SURVIVOR' && player.staminaActive) {
+            cellElement.style.border = '2px solid orange';
         }
     }
 }
