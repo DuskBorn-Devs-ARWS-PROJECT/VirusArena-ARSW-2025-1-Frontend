@@ -199,7 +199,7 @@ document.addEventListener('DOMContentLoaded', () => {
             );
         });
 
-        function generateSecureId() {
+        function generateId() {
             try {
                 // Navegadores modernos
                 if (typeof window !== 'undefined' && (window.crypto || window.msCrypto)) {
@@ -217,11 +217,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error('Error usando crypto:', e);
             }
 
-            // Fallback extremadamente raro solo si todo falla
+
             throw new Error('No se pudo generar un ID seguro: Entorno no compatible');
         }
 
-        function generateSecureGameCode() {
+        function generateGameCode() {
             try {
                 const charset = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // 32 caracteres no ambiguos
                 let code = '';
@@ -250,7 +250,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error('Error usando crypto:', e);
             }
 
-            // Fallback extremadamente raro solo si todo falla
+
             throw new Error('No se pudo generar un código seguro: Entorno no compatible');
         }
 
