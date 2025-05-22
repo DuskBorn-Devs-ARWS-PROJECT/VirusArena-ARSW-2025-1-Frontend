@@ -128,7 +128,6 @@ h1::after {
     overflow: hidden;
     background: rgba(30, 30, 30, 0.8);
     color: var(--light-color);
-    border: 1px solid var(--primary-color);
     box-shadow: 0 0 10px rgba(46, 204, 113, 0.3);
 }
 
