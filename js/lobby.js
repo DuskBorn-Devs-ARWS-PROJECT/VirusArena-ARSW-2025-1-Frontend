@@ -199,50 +199,59 @@ document.addEventListener('DOMContentLoaded', () => {
             );
         });
 
-        function generateId() {
-            // Use Web Crypto API when available
-            const crypto = window.crypto || window.msCrypto;
-
-            if (crypto?.getRandomValues) {
-                // Generate 8 bytes (64 bits) of random data
-                const buffer = new Uint8Array(8);
-                crypto.getRandomValues(buffer);
-
-                // Convert to base36 string (0-9a-z)
-                return Array.from(buffer)
-                    .map(b => b.toString(36).padStart(2, '0'))
-                    .join('')
-                    .slice(0, 9);
+        function generateSecureId() {
+            try {
+                // Navegadores modernos
+                if (typeof window !== 'undefined' && (window.crypto || window.msCrypto)) {
+                    const crypto = window.crypto || window.msCrypto;
+                    const buffer = new Uint8Array(6); // 48 bits de entropía
+                    crypto.getRandomValues(buffer);
+                    return Array.from(buffer, byte => byte.toString(36).padStart(2, '0')).join('').slice(0, 9);
+                }
+                // Node.js
+                else if (typeof require !== 'undefined') {
+                    const crypto = require('crypto');
+                    return crypto.randomBytes(6).toString('base64').replace(/[+/=]/g, '').slice(0, 9);
+                }
+            } catch (e) {
+                console.error('Error usando crypto:', e);
             }
 
-            // Fallback (less secure) for older browsers
-            console.warn('Using less secure Math.random() fallback for ID generation');
-            return Math.random().toString(36).slice(2, 11);
+            // Fallback extremadamente raro solo si todo falla
+            throw new Error('No se pudo generar un ID seguro: Entorno no compatible');
         }
 
-        function generateGameCode() {
-            // Use Web Crypto API when available
-            const crypto = window.crypto || window.msCrypto;
-
-            if (crypto?.getRandomValues) {
-                const charset = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // 32 chars, no ambiguous
-                const randomValues = new Uint32Array(4);
-                crypto.getRandomValues(randomValues);
-
+        function generateSecureGameCode() {
+            try {
+                const charset = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // 32 caracteres no ambiguos
                 let code = '';
-                for (let i = 0; i < 4; i++) {
-                    code += charset[randomValues[i] % charset.length];
+
+                // Navegadores modernos
+                if (typeof window !== 'undefined' && (window.crypto || window.msCrypto)) {
+                    const crypto = window.crypto || window.msCrypto;
+                    const randomValues = new Uint32Array(4);
+                    crypto.getRandomValues(randomValues);
+
+                    for (let i = 0; i < 4; i++) {
+                        code += charset[randomValues[i] % charset.length];
+                    }
+                    return code;
                 }
-                return code;
+                // Node.js
+                else if (typeof require !== 'undefined') {
+                    const crypto = require('crypto');
+                    const randomBytes = crypto.randomBytes(4);
+                    for (let i = 0; i < 4; i++) {
+                        code += charset[randomBytes[i] % charset.length];
+                    }
+                    return code;
+                }
+            } catch (e) {
+                console.error('Error usando crypto:', e);
             }
 
-            // Fallback (less secure)
-            console.warn('Using less secure Math.random() fallback for game code');
-            return Math.random().toString(36)
-                .slice(2, 6)
-                .toUpperCase()
-                .replace(/[^A-Z0-9]/g, '0')
-                .replace(/[IO]/g, 'X'); // Remove ambiguous characters
+            // Fallback extremadamente raro solo si todo falla
+            throw new Error('No se pudo generar un código seguro: Entorno no compatible');
         }
 
         function getStatusColors(type) {
