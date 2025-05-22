@@ -20,7 +20,10 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.removeItem('hostPlayerId');
         }
 
-        document.getElementById('gameCode').textContent = `Código de sala: ${gameCode}`;
+        const gameCodeElement = document.getElementById('gameCode');
+        if (gameCodeElement) {
+            gameCodeElement.textContent = `Código de sala: ${gameCode}`;
+        }
 
         const playersList = document.getElementById('playersList');
         const readyBtn = document.getElementById('readyBtn');
@@ -32,7 +35,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const statusMessage = document.createElement('div');
         statusMessage.id = 'connectionStatus';
-        document.querySelector('main').prepend(statusMessage);
+        const mainElement = document.querySelector('main');
+        if (mainElement) {
+            mainElement.prepend(statusMessage);
+        }
 
         let players = [];
         let isHost = false;
@@ -43,11 +49,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const socket = new SockJS('http://backend-app-lb-954081308.us-east-2.elb.amazonaws.com/ws');
         const stompClient = Stomp.over(socket);
 
-        stompClient.debug = (str) => {
-            console.debug("[STOMP] " + str);
-        };
+        stompClient.debug = () => {}; // Deshabilitar logs debug por defecto
 
         const handleStartGame = () => {
+            if (!stompClient?.connected) {
+                updateStatus("Error de conexión", "error");
+                return;
+            }
+
             if (!isHost) {
                 updateStatus("Solo el host puede iniciar la partida", "error");
                 return;
@@ -61,7 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const startRequest = {
                 hostPlayerId: playerId,
                 gameCode: gameCode,
-                timestamp: new Date().getTime()
+                timestamp: Date.now()
             };
 
             try {
@@ -77,20 +86,20 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
 
-        startBtn.onclick = handleStartGame;
+        startBtn.addEventListener('click', handleStartGame);
 
         stompClient.connect(
             { 'Authorization': `Bearer ${token}` },
-            function (frame) {
+            () => {
                 updateStatus('Conectado al servidor', 'success');
 
-                stompClient.subscribe(`/topic/lobby/${gameCode}`, function (message) {
+                stompClient.subscribe(`/topic/lobby/${gameCode}`, (message) => {
                     try {
                         const update = JSON.parse(message.body);
-                        players = (update.players || []).map(player => ({
+                        players = update.players?.map(player => ({
                             ...player,
                             ready: true
-                        }));
+                        })) || [];
 
                         let hostPlayerId = localStorage.getItem('hostPlayerId');
                         if (!hostPlayerId && players.length > 0) {
@@ -109,10 +118,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 });
 
-                stompClient.subscribe(`/topic/game/${gameCode}/start`, function (message) {
+                stompClient.subscribe(`/topic/game/${gameCode}/start`, (message) => {
                     try {
                         const gameState = JSON.parse(message.body);
-                        if (gameState.state.toLowerCase() === "in_progress") {
+                        if (gameState.state?.toLowerCase() === "in_progress") {
                             localStorage.setItem('gameState', JSON.stringify(gameState));
                             updateStatus("Redirigiendo a la partida...", "success");
                             setTimeout(() => {
@@ -125,10 +134,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
 
                 const joinRequest = {
-                    playerId: playerId,
-                    playerName: playerName,
-                    gameCode: gameCode,
-                    timestamp: new Date().getTime()
+                    playerId,
+                    playerName,
+                    gameCode,
+                    timestamp: Date.now()
                 };
 
                 stompClient.send(
@@ -136,8 +145,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     { 'Authorization': `Bearer ${token}` },
                     JSON.stringify(joinRequest)
                 );
-
-            }, function (error) {
+            },
+            (error) => {
                 console.error("Error de conexión STOMP:", error);
                 updateStatus("Error de conexión. Intentando reconectar...", "error");
                 setTimeout(() => location.reload(), 3000);
@@ -165,15 +174,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 playerCount.id = 'playerCount';
                 playerCount.textContent = `Jugadores conectados: ${players.length}`;
                 playerCount.style.marginTop = '10px';
-                document.querySelector('footer').prepend(playerCount);
+
+                const footer = document.querySelector('footer');
+                if (footer) {
+                    footer.prepend(playerCount);
+                }
             } catch (error) {
                 console.error("Error al actualizar UI:", error);
             }
         }
 
-        readyBtn.onclick = () => {
+        readyBtn.addEventListener('click', () => {
+            if (!stompClient?.connected) return;
+
             const readyRequest = {
-                playerId: playerId,
+                playerId,
                 isReady: true
             };
 
@@ -182,17 +197,41 @@ document.addEventListener('DOMContentLoaded', () => {
                 { 'Authorization': `Bearer ${token}` },
                 JSON.stringify(readyRequest)
             );
-        };
+        });
 
         function generateId() {
-            return Math.random().toString(36).substr(2, 9);
+            return Math.random().toString(36).slice(2, 11);
         }
 
         function generateGameCode() {
-            return Math.random().toString(36).substring(2, 6).toUpperCase();
+            return Math.random().toString(36).slice(2, 6).toUpperCase();
+        }
+
+        function getStatusColors(type) {
+            const colors = {
+                success: {
+                    text: '#2ecc71',
+                    background: 'rgba(46, 204, 113, 0.1)',
+                    border: '#2ecc71'
+                },
+                error: {
+                    text: '#e74c3c',
+                    background: 'rgba(231, 76, 60, 0.1)',
+                    border: '#e74c3c'
+                },
+                default: {
+                    text: '#3498db',
+                    background: 'rgba(52, 152, 219, 0.1)',
+                    border: '#3498db'
+                }
+            };
+
+            return colors[type] || colors.default;
         }
 
         function updateStatus(message, type) {
+            const colors = getStatusColors(type);
+
             statusMessage.textContent = message;
             statusMessage.className = `status-${type}`;
             Object.assign(statusMessage.style, {
@@ -200,10 +239,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 borderRadius: '5px',
                 marginBottom: '15px',
                 textAlign: 'center',
-                color: type === 'success' ? '#2ecc71' : type === 'error' ? '#e74c3c' : '#3498db',
-                backgroundColor: type === 'success' ? 'rgba(46, 204, 113, 0.1)' :
-                    type === 'error' ? 'rgba(231, 76, 60, 0.1)' : 'rgba(52, 152, 219, 0.1)',
-                border: `1px solid ${type === 'success' ? '#2ecc71' : type === 'error' ? '#e74c3c' : '#3498db'}`
+                color: colors.text,
+                backgroundColor: colors.background,
+                border: `1px solid ${colors.border}`
             });
         }
 

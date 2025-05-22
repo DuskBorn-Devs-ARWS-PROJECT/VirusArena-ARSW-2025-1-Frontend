@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
         gameState = JSON.parse(localStorage.getItem('gameState'));
         playerId = localStorage.getItem('playerId') || 'unknown';
 
-        if (!gameState || gameState.state.toLowerCase() !== "in_progress") {
+        if (!gameState?.state || gameState.state.toLowerCase() !== "in_progress") {
             redirectToLobby();
             return;
         }
@@ -30,10 +30,10 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function setupInitialUI() {
-    document.getElementById('playerName').textContent = localStorage.getItem('playerName');
-    document.getElementById('playerCount').textContent = gameState.players.length;
+    document.getElementById('playerName').textContent = localStorage.getItem('playerName') || 'Player';
+    document.getElementById('playerCount').textContent = gameState?.players?.length ?? 0;
 
-    const currentPlayer = gameState.players.find(p => p.id === playerId);
+    const currentPlayer = gameState.players?.find(p => p.id === playerId);
     if (currentPlayer) updatePlayerInfo(currentPlayer);
 
     startGameTimer();
@@ -47,17 +47,17 @@ function setupWebSocket(token) {
 
     stompClient.connect(
         { 'Authorization': `Bearer ${token}` },
-        function() {
+        () => {
             console.log("Conectado al juego");
 
-            stompClient.subscribe(`/topic/game/${gameState.gameCode}/update`, function(message) {
+            stompClient.subscribe(`/topic/game/${gameState.gameCode}/update`, (message) => {
                 const update = JSON.parse(message.body);
                 gameState = update;
 
                 renderGame(update);
                 startGameTimer();
 
-                const currentPlayer = update.players.find(p => p.id === playerId);
+                const currentPlayer = update.players?.find(p => p.id === playerId);
                 if (currentPlayer) {
                     updatePlayerInfo(currentPlayer);
                     if (currentPlayer.type === 'SURVIVOR' && currentPlayer.staminaActive) {
@@ -71,7 +71,7 @@ function setupWebSocket(token) {
                 }
             });
         },
-        function(error) {
+        (error) => {
             console.error("Error de conexión:", error);
             setTimeout(() => setupWebSocket(token), 5000);
         }
@@ -125,18 +125,22 @@ function addPlayerEffects(cellElement, x, y, state) {
 }
 
 function updatePlayerInfo(player) {
-    document.getElementById('playerType').textContent = player.type === 'INFECTED' ? 'Infectado' : 'Superviviente';
+    const playerTypeEl = document.getElementById('playerType');
+    if (!playerTypeEl) return;
+
+    playerTypeEl.textContent = player.type === 'INFECTED' ? 'Infectado' : 'Superviviente';
 
     if (player.type === 'SURVIVOR') {
-        document.getElementById('powerUpCount').textContent = player.powerUpCount || 0;
+        document.getElementById('powerUpCount').textContent = player.powerUpCount ?? 0;
 
+        const staminaCountEl = document.getElementById('staminaCount');
         if (player.staminaActive) {
             const remainingTime = Math.max(0, Math.ceil((player.staminaEndTime - Date.now()) / 1000));
-            document.getElementById('staminaCount').textContent = `${remainingTime}s`;
-            document.getElementById('staminaCount').style.color = 'var(--warning-color)';
+            staminaCountEl.textContent = `${remainingTime}s`;
+            staminaCountEl.style.color = 'var(--warning-color)';
         } else {
-            document.getElementById('staminaCount').textContent = 'Inactivo';
-            document.getElementById('staminaCount').style.color = 'var(--muted-text)';
+            staminaCountEl.textContent = 'Inactivo';
+            staminaCountEl.style.color = 'var(--muted-text)';
         }
     } else {
         document.querySelector('.player-stats').innerHTML = `
@@ -147,15 +151,17 @@ function updatePlayerInfo(player) {
 }
 
 function startGameTimer() {
-    if (gameTimeInterval) clearInterval(gameTimeInterval);
+    clearInterval(gameTimeInterval);
 
     gameTimeInterval = setInterval(() => {
-        const remainingMillis = gameState.remainingTimeMillis;
+        const remainingMillis = gameState?.remainingTimeMillis ?? 0;
         const minutes = Math.floor(remainingMillis / 60000).toString().padStart(2, '0');
         const seconds = Math.floor((remainingMillis % 60000) / 1000).toString().padStart(2, '0');
-        document.getElementById('gameTimer').textContent = `${minutes}:${seconds}`;
 
-        if (gameState.state === 'finished') {
+        const gameTimerEl = document.getElementById('gameTimer');
+        if (gameTimerEl) gameTimerEl.textContent = `${minutes}:${seconds}`;
+
+        if (gameState?.state === 'finished') {
             clearInterval(gameTimeInterval);
             window.location.href = '/results';
         }
@@ -163,25 +169,27 @@ function startGameTimer() {
 }
 
 function startStaminaTimer(endTime) {
-    if (staminaTimer) clearInterval(staminaTimer);
+    clearInterval(staminaTimer);
     staminaTimer = setInterval(() => {
         const now = Date.now();
+        const staminaCountEl = document.getElementById('staminaCount');
+
         if (now >= endTime) {
             clearInterval(staminaTimer);
-            document.getElementById('staminaCount').textContent = 'Inactivo';
-            document.getElementById('staminaCount').style.color = 'var(--muted-text)';
+            staminaCountEl.textContent = 'Inactivo';
+            staminaCountEl.style.color = 'var(--muted-text)';
         } else {
             const remaining = Math.ceil((endTime - now) / 1000);
-            document.getElementById('staminaCount').textContent = `${remaining}s`;
+            staminaCountEl.textContent = `${remaining}s`;
         }
     }, 500);
 }
 
 function setupEventListeners() {
     document.addEventListener('keydown', (e) => {
-        if (!stompClient || !stompClient.connected) return;
+        if (!stompClient?.connected) return;
 
-        const currentPlayer = gameState.players.find(p => p.id === playerId);
+        const currentPlayer = gameState.players?.find(p => p.id === playerId);
         if (!currentPlayer) return;
 
         let action = null;
@@ -191,14 +199,15 @@ function setupEventListeners() {
             case 'a': case 'arrowleft':  action = 'MOVE_LEFT'; break;
             case 'd': case 'arrowright': action = 'MOVE_RIGHT'; break;
             case 'e':
-                if (currentPlayer.type === 'SURVIVOR' && gameState.board[currentPlayer.y][currentPlayer.x] === 'P') {
+                if (currentPlayer.type === 'SURVIVOR' && gameState.board?.[currentPlayer.y]?.[currentPlayer.x] === 'P') {
                     stompClient.send(
                         `/app/game/${gameState.gameCode}/collect`,
                         { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
                         JSON.stringify({ playerId, x: currentPlayer.x, y: currentPlayer.y })
                     );
                 }
-                e.preventDefault(); return;
+                e.preventDefault();
+                return;
             case 'q':
                 if (currentPlayer.type === 'SURVIVOR' && currentPlayer.powerUpCount > 0) {
                     stompClient.send(
@@ -207,7 +216,8 @@ function setupEventListeners() {
                         JSON.stringify({ playerId, action: 'USE_POWERUP' })
                     );
                 }
-                e.preventDefault(); return;
+                e.preventDefault();
+                return;
         }
 
         if (action) {
@@ -220,9 +230,9 @@ function setupEventListeners() {
         }
     });
 
-    document.getElementById('quitBtn').addEventListener('click', () => {
+    document.getElementById('quitBtn')?.addEventListener('click', () => {
         if (confirm('¿Estás seguro de abandonar la partida?')) {
-            if (stompClient && stompClient.connected) {
+            if (stompClient?.connected) {
                 stompClient.send(
                     `/app/game/${gameState.gameCode}/quit`,
                     { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
@@ -236,11 +246,11 @@ function setupEventListeners() {
 
 function redirectToLobby() {
     clearInterval(gameTimeInterval);
-    if (staminaTimer) clearInterval(staminaTimer);
+    clearInterval(staminaTimer);
     window.location.href = 'lobby.html';
 }
 
 window.addEventListener('beforeunload', () => {
-    if (stompClient && stompClient.connected) stompClient.disconnect();
-    if (staminaTimer) clearInterval(staminaTimer);
+    stompClient?.disconnect();
+    clearInterval(staminaTimer);
 });

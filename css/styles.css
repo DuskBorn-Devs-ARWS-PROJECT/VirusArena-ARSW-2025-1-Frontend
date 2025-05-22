@@ -206,7 +206,6 @@ h1::after {
 input, select {
     padding: 12px;
     border-radius: 3px;
-    border: 1px solid #333;
     width: 100%;
     margin-bottom: 20px;
     background-color: rgba(30, 30, 30, 0.8);
